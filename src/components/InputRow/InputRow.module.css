@@ -1,0 +1,53 @@
+.row {
+  border-left: 3px solid var(--ion-color-step-300);
+  margin: 6px 16px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--ion-surface-color);
+  transition: border-color 0.2s;
+}
+
+.item {
+  --background: transparent;
+  --padding-start: 12px;
+  --inner-padding-end: 12px;
+  min-height: 52px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ion-text-color-secondary);
+  flex: 0 0 auto;
+  min-width: 100px;
+}
+
+.inputWrap {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 4px;
+}
+
+.input {
+  --color: var(--ion-text-color);
+  --placeholder-color: var(--ion-color-step-400);
+  font-size: 18px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  text-align: right;
+  flex: 1;
+}
+
+.unit {
+  font-size: 14px;
+  color: var(--ion-text-color-secondary);
+  padding-right: 4px;
+  white-space: nowrap;
+}
+
+.hint {
+  display: block;
+  font-size: 12px;
+  padding: 2px 12px 6px;
+}

@@ -1,0 +1,113 @@
+.header {
+  padding: 16px 16px 8px;
+}
+
+.benderName {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ion-text-color);
+}
+
+.shoeName {
+  font-size: 13px;
+  color: var(--ion-text-color-secondary);
+  font-family: 'IBM Plex Mono', monospace;
+  margin-top: 2px;
+}
+
+.cardTitle {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ion-text-color-secondary);
+}
+
+.specGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.specCell {
+  background: var(--ion-color-step-50);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.specLabel {
+  font-size: 11px;
+  color: var(--ion-text-color-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.calcBadge {
+  background: var(--ion-color-step-200);
+  color: var(--ion-text-color-secondary);
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.specValue {
+  font-size: 20px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 700;
+  color: var(--ion-color-primary);
+}
+
+.specNote {
+  font-size: 10px;
+  color: var(--ion-text-color-secondary);
+  margin-top: 4px;
+  font-family: 'IBM Plex Mono', monospace;
+  line-height: 1.4;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  padding: 0;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+}
+
+.table th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ion-text-color-secondary);
+  border-bottom: 1px solid var(--ion-color-step-150);
+}
+
+.table tbody tr {
+  border-bottom: 1px solid var(--ion-color-step-100);
+}
+
+.table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.angleCell {
+  padding: 10px 12px;
+  font-weight: 700;
+  color: var(--ion-color-primary);
+}
+
+.valueCell {
+  padding: 10px 12px;
+  color: var(--ion-text-color);
+}

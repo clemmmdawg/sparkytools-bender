@@ -1,0 +1,159 @@
+.selectorCard {
+  margin: 12px 12px 8px;
+}
+
+.cardTitle {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ion-text-color-secondary);
+}
+
+.selectRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--ion-color-step-100);
+}
+
+.selectRow:last-child {
+  border-bottom: none;
+}
+
+.selectLabel {
+  font-size: 14px;
+  color: var(--ion-text-color-secondary);
+  min-width: 60px;
+}
+
+.select {
+  font-size: 15px;
+  font-weight: 500;
+  text-align: right;
+}
+
+.shoeStats {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--ion-color-step-100);
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.statLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ion-text-color-secondary);
+  margin-bottom: 2px;
+}
+
+.statValue {
+  font-size: 15px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  color: var(--ion-color-primary);
+}
+
+.sectionHeader {
+  padding: 16px 16px 4px;
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ion-text-color-secondary);
+}
+
+.groupScroll {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.groupScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.groupTab {
+  flex: 0 0 auto;
+  background: var(--ion-surface-color);
+  border: 1.5px solid var(--ion-color-step-200);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ion-text-color-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.groupTabActive {
+  background: var(--ion-color-primary);
+  border-color: var(--ion-color-primary);
+  color: var(--ion-color-primary-contrast);
+  font-weight: 700;
+}
+
+.bendGrid {
+  padding: 0 8px 16px;
+}
+
+.bendCard {
+  width: 100%;
+  background: var(--ion-surface-color);
+  border: 1.5px solid var(--ion-color-step-200);
+  border-radius: 12px;
+  padding: 20px 12px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s;
+  min-height: 90px;
+}
+
+.bendCard:active {
+  transform: scale(0.97);
+  border-color: var(--ion-color-primary);
+}
+
+.bendCardDisabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.bendIcon {
+  font-size: 28px;
+  color: var(--ion-color-primary);
+}
+
+.bendLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ion-text-color);
+  text-align: center;
+}
+
+.comingSoon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 9px;
+}
