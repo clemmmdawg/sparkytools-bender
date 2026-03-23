@@ -1,0 +1,13 @@
+.wrapper {
+  width: 100%;
+  background: var(--diagram-bg, #0f0f0f);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
