@@ -42,11 +42,14 @@ sparky-tools-bender/
 │   ├── data/
 │   │   └── benders.ts       # Static bender database (specs keyed by manufacturer/model/size)
 │   ├── lib/
-│   │   └── bendMath.ts      # ALL calculation logic — pure functions, no React imports
+│   │   ├── bendMath.ts      # ALL calculation logic — pure functions, no React imports
+│   │   ├── svgPath.ts       # Pure function: builds SVG path `d` string from bend segments
+│   │   └── units.ts         # Unit conversion helpers (toInches, fromInches)
 │   ├── hooks/
 │   │   └── useBender.ts     # Hook to load/save selected bender from localStorage
 │   ├── components/
-│   │   ├── BendDiagram/     # SVG bend visualizer component
+│   │   ├── ConduitStrip/    # Vertical conduit-with-marks visualizer (left-rail UI)
+│   │   ├── BendDiagram/     # SVG top-down/side-view shape of the completed bend
 │   │   └── InputRow/        # Reusable labeled input with unit toggle
 │   └── pages/
 │       ├── Home/            # Bender selector + bend type picker
@@ -194,9 +197,11 @@ All bend types must be implemented. Each has its own calculator view under `src/
 Each calculator page must output:
 1. All marks to place on the conduit (distances from end or reference point)
 2. Bend angles at each mark
-3. Which direction to bend at each mark
+3. Which direction to bend at each mark (↑ or ↓)
 4. Whether to flip the conduit between marks (with clear instruction)
-5. A simple SVG diagram of the completed bend shape
+5. A `CompositeVisualizer` SVG containing the `ConduitStrip` (left rail) and `BendDiagram` (geometry + callouts) side by side — this is the primary, hero-sized output
+6. A scrollable mark list below the visualizer with per-mark labels, distances, and direction arrows
+7. Floating result cards anchored to the diagram's dimension lines showing key output values
 
 ---
 
@@ -287,7 +292,184 @@ The app must be **fully functional offline**. No external API calls. No CDN font
 
 ---
 
-## Design & Theming
+## Conduit Visualizer Components
+
+The calculator results screen is dominated by a **single large composite SVG visualizer** that fills most of the screen. This is not a small diagram tucked below a list — it is the primary output. Two sub-components live inside it and must be understood separately even though they render into the same SVG viewport.
+
+The overall layout of a calculator page is:
+
+```
+┌─────────────────────────────┐
+│  [Bender selector bar]      │  ← fixed top bar
+├─────────────────────────────┤
+│                             │
+│   COMPOSITE VISUALIZER      │  ← fills ~70-75% of screen height
+│   (ConduitStrip + Diagram   │     single SVG element
+│    side by side)            │
+│                             │
+├─────────────────────────────┤
+│  [Scrollable mark list]     │  ← Mark 1 · 22.5° / 8 1/8" rows
+│  [Result value cards]       │     (from first screenshot)
+└─────────────────────────────┘
+```
+
+The user **scrolls the bottom section** to see all mark rows and result cards. The visualizer SVG stays fixed (or sticky) at the top of the content area so it is always visible as a reference.
+
+---
+
+### 1. `ConduitStrip` — The Mark Rail (left edge of visualizer)
+
+The conduit strip is the **narrow vertical element on the far left of the composite visualizer SVG**. It is always visible as the leftmost element regardless of bend type.
+
+#### Appearance
+
+- The strip is rendered as a **rounded-rectangle tube shape** — not a flat bar. Use a subtle horizontal linear gradient (lighter center, darker edges) to simulate a cylindrical cross-section. The color is a neutral dark gray (approximately `#3a3a3c` center, `#1c1c1e` edges).
+- Width of the strip in the SVG is proportional to the conduit's outside diameter at diagram scale
+- The strip represents the **full length of the conduit** from top to bottom of the SVG viewport
+- **No end caps are visible** — the strip bleeds off both edges of the viewport, implying a longer stick of conduit than shown
+
+#### Mark Ticks
+
+- Each mark is a **short horizontal white line** (1–2px, full width of the strip) with a small **inward-pointing arrowhead** or chevron on the right edge of the strip, pointing toward the bend
+- Ticks are precisely positioned at `(distanceFromEnd / conduitLengthIn) * viewportHeight` — proportional placement is critical for the diagram to communicate correct spacing between bends
+- There are **no labels on the strip itself** — labels live in the scrollable mark list below
+
+#### Bend Blocks
+
+- At each mark's position, a **colored filled rectangle** is overlaid on the strip, centered on the tick, with height equal to `(developedLength / conduitLengthIn) * viewportHeight`
+- The block represents the arc of conduit consumed by that bend
+- **Color coding** by QuickCheck validity:
+  - `ok` → `--ion-color-success` (green)
+  - `warning` → `--ion-color-warning` (amber)
+  - `error` → `--ion-color-danger` (red)
+- The block should render with **full opacity**, not transparent — it sits on top of the strip and visually replaces that section of gray tube, showing that portion of the conduit is "used up" by the bend
+- Blocks must not overlap each other; if calculated positions would cause overlap, trigger a `warning` or `error` validity state
+
+---
+
+### 2. `BendDiagram` — The Geometry View (main body of visualizer)
+
+This occupies the **large center and right area of the composite visualizer SVG**, to the right of the ConduitStrip. It shows the true geometric shape of the completed bend.
+
+#### Conduit Tube Rendering
+
+The conduit is rendered as a **thick, rounded, 3D-looking tube path** — not a simple SVG stroke. Achieve this with:
+
+- Two parallel offset paths forming the outer edges of the tube wall
+- A **linear gradient fill** between them — lighter in the center to simulate cylindrical highlight, darker at edges. Base color approximately `#555` (straight sections) or `--ion-color-success` green (bend arc sections)
+- A **subtle drop shadow** (`filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6))`) on the tube to lift it off the dark background
+- Straight sections: neutral gray gradient
+- Bend arc sections: the QuickCheck validity color (green/amber/red) with the same gradient treatment — the highlight should follow the curve
+
+The tube width in SVG units must be proportional to the conduit's outside diameter relative to the diagram's overall scale. A 3" rigid conduit should look visibly thicker than a 1/2" EMT.
+
+#### Geometry Accuracy
+
+- All geometry is derived from `buildConduitPath()` in `src/lib/svgPath.ts` — **not hand-drawn or hardcoded per bend type**
+- Straight sections are `L` commands, bend arcs are `A` commands using the actual centerline radius scaled to diagram units
+- A 45° offset must look like a 45° offset. An 11.6° bend must look notably shallower than a 22.5° bend. Geometric accuracy is non-negotiable.
+- The viewBox auto-fits to the bounding box of the completed path with ~10% padding on all sides
+
+#### Dimension Callouts — Two Visual Layers
+
+This is the most visually complex part. There are **two distinct types of lines** in the diagram, both observed in the reference screenshots:
+
+**Layer 1 — White geometric construction lines:**
+- Thin white lines (1px, solid) showing the theoretical straight-line projections of the conduit's straight sections extended through the bend zone
+- These are the geometric construction lines an electrician would draw on paper — they show where the conduit *would* go if it didn't bend
+- They cross each other at the theoretical corner point, forming an X or V shape at the bend
+- Small **inward-pointing white arrowheads** on these lines indicate the direction along the conduit
+- Do not label these lines
+
+**Layer 2 — Blue measurement dimension lines:**
+- Thin blue dashed lines (`--ion-color-secondary`) with double-ended arrowheads, showing the key output measurements
+- Each blue dimension line connects to a **floating result card** on the right side of the screen via a thin dashed blue leader line
+- The arrowheads are clean and sharp — use SVG `<marker>` definitions, not emoji or Unicode arrows
+- Draw blue dimension lines only for the primary user-facing outputs:
+  - **Offset**: rise (perpendicular distance between the two parallel runs), distance between bends
+  - **90° bend**: stub length (vertical), distance from end to mark (horizontal)
+  - **Saddle**: saddle height, distance between outer marks
+  - **Compound 90°**: obstruction dimensions
+  - **Segmented 90°**: each segment angle, total developed length
+
+#### Floating Result Cards
+
+Result values float as **labeled cards** positioned to the right of the diagram, connected to their dimension lines. Each card contains:
+
+- A small label in the secondary color (e.g. "Adjacent", "Rise", "Bend") — matches `--ion-color-secondary` blue for input-derived values, white for calculated outputs
+- The numeric value in large monospace text with fractional display (`15 ½"`)
+- Rounded rectangle background in a slightly elevated surface color (`--ion-surface-color` + slight opacity)
+- Cards are positioned so their leader lines don't cross each other — stack them vertically on the right edge
+
+The cards in the scrollable list below the visualizer show the same values in a more detailed format (with more context). The floating cards are a quick glance reference while reading the diagram.
+
+---
+
+### `buildConduitPath` — Path Construction
+
+Implement in `src/lib/svgPath.ts` as a pure function:
+
+```ts
+type Segment =
+  | { type: 'line'; length: number }          // straight run, in diagram units
+  | { type: 'arc'; radius: number; angleDeg: number; sweepFlag: 0 | 1 };
+
+interface PathResult {
+  d: string;              // SVG path `d` attribute string
+  boundingBox: { x: number; y: number; width: number; height: number };
+  segmentEndpoints: Array<{ x: number; y: number; headingDeg: number }>;
+  // ^ one entry per segment end, used to position construction lines and callouts
+}
+
+function buildConduitPath(
+  segments: Segment[],
+  startX: number,
+  startY: number,
+  startHeadingDeg: number,  // 0 = rightward, 90 = downward
+  diagramScale: number      // inches-per-SVG-unit ratio
+): PathResult
+```
+
+The `segmentEndpoints` output is used by the diagram layer to position the white construction lines and blue dimension callouts without re-computing geometry from scratch.
+
+---
+
+### Component Relationship & Data Flow
+
+```
+CalculatorPage
+│
+├── [Input fields]  →  calcResult = computeBend(inputs, benderShoe)
+│
+├── CompositeVisualizer (single <svg>)
+│   ├── ConduitStrip (left ~15% of SVG width)
+│   │   ├── tube gradient rect
+│   │   ├── bend blocks (colored, height = developedLength proportion)
+│   │   └── tick marks + arrowheads at each mark position
+│   └── BendDiagram (remaining ~85% of SVG width)
+│       ├── tube path (offset parallel paths + gradient fill + drop shadow)
+│       ├── white construction lines (geometric projections)
+│       ├── blue dimension lines (double-ended arrows + dashed leaders)
+│       └── floating result cards (positioned SVG foreignObject or <g> elements)
+│
+└── ScrollableMarkList (below the SVG)
+    ├── Mark rows (label · angle / distance value / direction arrow)
+    └── Full result card list (all outputs with labels)
+```
+
+Both `ConduitStrip` and `BendDiagram` receive the same `calcResult` object — they do not perform any math. The `CompositeVisualizer` parent component is responsible for computing `diagramScale` from the available SVG viewport size and the physical dimensions of the bend.
+
+---
+
+### What NOT to Do in the Visualizer
+
+- Do not use `<canvas>` — everything is pure SVG for crispness at all screen densities
+- Do not hardcode shapes per bend type — all geometry flows from `buildConduitPath()`
+- Do not place text labels directly on the conduit tube — they go in the floating cards or the mark list below
+- Do not use CSS `transform: rotate()` on the whole diagram to "fake" a different bend angle — compute correct coordinates
+- Do not render the diagram until `calcResult` is valid — show an empty state prompt instead
+
+---
 
 **Tone**: Industrial utilitarian — this is a tool used on dusty job sites with dirty hands and bright sunlight. Dark theme is primary. High contrast. Large tap targets (minimum 48×48px). No decorative flourishes that add visual noise.
 
@@ -312,9 +494,10 @@ The app must be **fully functional offline**. No external API calls. No CDN font
 
 **Layout rules**:
 - Bottom tab bar for main navigation (Home, Specs, Settings)
-- Calculator pages use a full-screen layout: inputs at top, live results panel below, SVG diagram at bottom
+- Calculator pages: fixed bender selector bar at top → large composite visualizer SVG (~70% of screen height, sticky) → scrollable mark list and result cards below
+- The visualizer is the hero of every calculator screen — it is not a small supplement to a list, it IS the primary output
 - No horizontal scrolling anywhere
-- Results panel should be visually distinct from input panel (different background shade)
+- Inputs live in a collapsible or slide-up sheet so they don't compete with the visualizer for space
 
 ---
 
