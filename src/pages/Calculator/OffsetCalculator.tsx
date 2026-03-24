@@ -1,5 +1,5 @@
 // src/pages/Calculator/OffsetCalculator.tsx
-// Offset calculator — visualizer card with integrated inputs, results below.
+// Clean layout inspired by mockup: bender chips → diagram + floating cards → mark list.
 
 import React, { useState, useMemo } from 'react'
 import {
@@ -16,15 +16,28 @@ import {
 import { alertCircleOutline, ellipsisVertical } from 'ionicons/icons'
 import { computeOffset } from '../../lib/bendMath'
 import { formatDisplay } from '../../lib/units'
-import { CompositeVisualizer } from '../../components/CompositeVisualizer'
+import { buildConduitPath } from '../../lib/svgPath'
+import type { Segment } from '../../lib/svgPath'
 import { useBender } from '../../hooks/useBender'
 import { useSettings } from '../../hooks/useSettings'
 import styles from './Calculator.module.css'
 
 const QUICK_ANGLES = [10, 15, 22.5, 30, 45]
+const LEG_IN = 6        // straight leg length shown in diagram (inches)
+const TUBE_IN = 0.75    // visual tube width (inches)
+
+const VALIDITY_COLORS: Record<string, string> = {
+  ok: '#30d158',
+  warning: '#ff9f0a',
+  error: '#ff453a',
+}
+
+// SVG canvas — 4:3, matches diagramContainer CSS aspect-ratio
+const VW = 400
+const VH = 300
 
 export function OffsetCalculator(): JSX.Element {
-  const { selectedShoe } = useBender()
+  const { selectedShoe, selectedBender } = useBender()
   const { settings } = useSettings()
 
   const [riseStr, setRiseStr] = useState('6')
@@ -32,17 +45,50 @@ export function OffsetCalculator(): JSX.Element {
 
   const rise = parseFloat(riseStr) || 0
   const thetaDeg = parseFloat(thetaStr) || 22.5
+  const unitLabel = settings.units === 'cm' ? 'cm' : '"'
 
   const result = useMemo(() => {
     if (!selectedShoe || rise <= 0 || thetaDeg <= 0) return null
-    try {
-      return computeOffset({ rise, thetaDeg, benderShoe: selectedShoe })
-    } catch {
-      return null
-    }
+    try { return computeOffset({ rise, thetaDeg, benderShoe: selectedShoe }) }
+    catch { return null }
   }, [rise, thetaDeg, selectedShoe])
 
-  const unitLabel = settings.units === 'cm' ? 'cm' : '"'
+  // Build the conduit SVG path, auto-fitted to the viewBox
+  const diagram = useMemo(() => {
+    if (!result) return null
+
+    const r = result.developedLength / (Math.PI * (thetaDeg / 180)) || 4
+
+    const segments: Segment[] = [
+      { type: 'line', length: LEG_IN },
+      { type: 'arc', radius: r, angleDeg: thetaDeg, sweepFlag: 0 },
+      { type: 'line', length: result.distanceBetweenBends },
+      { type: 'arc', radius: r, angleDeg: thetaDeg, sweepFlag: 1 },
+      { type: 'line', length: LEG_IN },
+    ]
+
+    const raw  = buildConduitPath(segments, 0, 0, 90, 1)
+    const bb   = raw.boundingBox
+    const pad  = 20
+    const scale = Math.min(
+      bb.width  > 0 ? (VW - pad * 2) / bb.width  : 1,
+      bb.height > 0 ? (VH - pad * 2) / bb.height : 1,
+    )
+    const ox = pad + (VW - pad * 2 - bb.width  * scale) / 2 - bb.x * scale
+    const oy = pad + (VH - pad * 2 - bb.height * scale) / 2 - bb.y * scale
+
+    const fin = buildConduitPath(segments, ox, oy, 90, scale)
+    const eps = fin.segmentEndpoints
+    const rs  = (r * scale).toFixed(1)
+
+    return {
+      d: fin.d,
+      tubeW: TUBE_IN * scale,
+      bendColor: VALIDITY_COLORS[result.validity] ?? VALIDITY_COLORS.ok,
+      r, scale, rs,
+      pt0: eps[0], pt1: eps[1], pt2: eps[2], pt3: eps[3], pt4: eps[4],
+    }
+  }, [result, thetaDeg])
 
   if (!selectedShoe) {
     return (
@@ -56,7 +102,7 @@ export function OffsetCalculator(): JSX.Element {
             </IonButtons>
           </IonToolbar>
         </IonHeader>
-        <IonContent className="ion-padding">
+        <IonContent>
           <div className={styles.noBenderPrompt}>
             <IonIcon icon={alertCircleOutline} className={styles.noBenderIcon} />
             <p>Open the menu and select a bender to begin.</p>
@@ -73,130 +119,181 @@ export function OffsetCalculator(): JSX.Element {
           <IonButtons slot="start"><IonMenuButton /></IonButtons>
           <IonTitle>Offset</IonTitle>
           <IonButtons slot="end">
-            <IonButton disabled>
-              <IonIcon slot="icon-only" icon={ellipsisVertical} />
-            </IonButton>
+            <IonButton disabled><IonIcon slot="icon-only" icon={ellipsisVertical} /></IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>
 
       <IonContent>
-        {/* ── Visualizer card with integrated inputs ─────────── */}
-        <div className={styles.vizCard}>
-          {result && result.validity !== 'error' ? (
-            <CompositeVisualizer result={result} unitMode={settings.units} />
-          ) : result?.validity === 'error' ? (
-            <div className={styles.errorState}>
-              <IonIcon icon={alertCircleOutline} color="danger" className={styles.errorIcon} />
-              <p className={styles.errorMsg}>{result.validityMessage ?? 'Invalid inputs'}</p>
-            </div>
-          ) : (
-            <div className={styles.emptyState}>
-              <p>Enter rise and angle to see the bend diagram.</p>
-            </div>
-          )}
 
-          {/* Inputs at bottom of viz card */}
-          <div className={styles.vizInputRow}>
-            <div className={styles.vizInputGroup}>
-              <span className={styles.vizInputLabel}>Rise</span>
-              <input
-                className={styles.vizInput}
-                type="number"
-                inputMode="decimal"
-                value={riseStr}
-                min={0}
-                onChange={e => setRiseStr(e.target.value)}
-              />
-              <span className={styles.vizInputUnit}>{unitLabel}</span>
-            </div>
-            <div className={styles.vizInputDivider} />
-            <div className={styles.vizInputGroup}>
-              <span className={styles.vizInputLabel}>Angle</span>
-              <input
-                className={styles.vizInput}
-                type="number"
-                inputMode="decimal"
-                value={thetaStr}
-                min={1}
-                max={89}
-                onChange={e => setThetaStr(e.target.value)}
-              />
-              <span className={styles.vizInputUnit}>°</span>
-            </div>
+        {/* ── Bender chip row ─────────────────────────────────── */}
+        <div className={styles.benderRow}>
+          <div className={styles.benderChip}>
+            {selectedBender?.manufacturer} {selectedBender?.model}
           </div>
+          <div className={styles.benderChip}>{selectedShoe.conduitType}</div>
+          <div className={styles.benderChip}>{selectedShoe.tradeSize}"</div>
+        </div>
 
-          <div className={styles.quickAngles}>
-            {QUICK_ANGLES.map(a => (
-              <button
-                key={a}
-                className={`${styles.angleChip} ${parseFloat(thetaStr) === a ? styles.angleChipActive : ''}`}
-                onClick={() => setThetaStr(String(a))}
+        {/* ── Diagram + overlaid input/result cards ───────────── */}
+        <div className={styles.diagramContainer}>
+
+          {/* SVG conduit geometry */}
+          <svg
+            viewBox={`0 0 ${VW} ${VH}`}
+            className={styles.diagramSvg}
+            preserveAspectRatio="xMidYMid meet"
+          >
+            <rect width={VW} height={VH} fill="#0f0f0f" rx={0} />
+
+            {diagram ? (
+              <>
+                <defs>
+                  <linearGradient id="oc-sg" x1="0" x2="1" y1="0" y2="0">
+                    <stop offset="0%"   stopColor="#1c1c1e" />
+                    <stop offset="50%"  stopColor="#5a5a5c" />
+                    <stop offset="100%" stopColor="#1c1c1e" />
+                  </linearGradient>
+                  <filter id="oc-shadow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="rgba(0,0,0,0.8)" />
+                  </filter>
+                </defs>
+
+                {/* Full tube in gray */}
+                <path
+                  d={diagram.d}
+                  fill="none"
+                  stroke="url(#oc-sg)"
+                  strokeWidth={diagram.tubeW}
+                  strokeLinecap="round"
+                  filter="url(#oc-shadow)"
+                />
+
+                {/* First bend arc in validity color */}
+                {diagram.pt0 && diagram.pt1 && (
+                  <path
+                    d={`M ${diagram.pt0.x.toFixed(1)} ${diagram.pt0.y.toFixed(1)} A ${diagram.rs} ${diagram.rs} 0 0 0 ${diagram.pt1.x.toFixed(1)} ${diagram.pt1.y.toFixed(1)}`}
+                    fill="none"
+                    stroke={diagram.bendColor}
+                    strokeWidth={diagram.tubeW}
+                    strokeLinecap="round"
+                  />
+                )}
+
+                {/* Second bend arc in validity color */}
+                {diagram.pt2 && diagram.pt3 && (
+                  <path
+                    d={`M ${diagram.pt2.x.toFixed(1)} ${diagram.pt2.y.toFixed(1)} A ${diagram.rs} ${diagram.rs} 0 0 1 ${diagram.pt3.x.toFixed(1)} ${diagram.pt3.y.toFixed(1)}`}
+                    fill="none"
+                    stroke={diagram.bendColor}
+                    strokeWidth={diagram.tubeW}
+                    strokeLinecap="round"
+                  />
+                )}
+              </>
+            ) : (
+              <text
+                x={VW / 2} y={VH / 2}
+                textAnchor="middle"
+                fill="rgba(255,255,255,0.2)"
+                fontSize={14}
+                fontFamily="sans-serif"
               >
-                {a}°
-              </button>
-            ))}
+                Enter values below
+              </text>
+            )}
+          </svg>
+
+          {/* Floating card column — overlaid on right side of diagram */}
+          <div className={styles.cardCol}>
+
+            <div className={styles.fCard}>
+              <span className={styles.fLabel}>Between Bends</span>
+              <span className={styles.fValue}>
+                {result ? formatDisplay(result.distanceBetweenBends, settings.units) : '—'}
+              </span>
+            </div>
+
+            <div className={styles.fCard}>
+              <span className={styles.fLabel}>Bend</span>
+              <div className={styles.fInputRow}>
+                <input
+                  className={styles.fInput}
+                  type="number"
+                  inputMode="decimal"
+                  value={thetaStr}
+                  onChange={e => setThetaStr(e.target.value)}
+                />
+                <span className={styles.fUnit}>°</span>
+              </div>
+            </div>
+
+            <div className={styles.fCard}>
+              <span className={styles.fLabel}>Rise</span>
+              <div className={styles.fInputRow}>
+                <input
+                  className={styles.fInput}
+                  type="number"
+                  inputMode="decimal"
+                  value={riseStr}
+                  onChange={e => setRiseStr(e.target.value)}
+                />
+                <span className={styles.fUnit}>{unitLabel}</span>
+              </div>
+            </div>
+
+            <div className={styles.fCard}>
+              <span className={styles.fLabel}>Shrink</span>
+              <span className={styles.fValue}>
+                {result ? formatDisplay(result.shrink, settings.units) : '—'}
+              </span>
+            </div>
+
           </div>
         </div>
 
-        {/* ── Scrollable results ──────────────────────────────── */}
+        {/* ── Quick angle chips ────────────────────────────────── */}
+        <div className={styles.quickAngles}>
+          {QUICK_ANGLES.map(a => (
+            <button
+              key={a}
+              className={`${styles.angleChip} ${parseFloat(thetaStr) === a ? styles.angleChipActive : ''}`}
+              onClick={() => setThetaStr(String(a))}
+            >
+              {a}°
+            </button>
+          ))}
+        </div>
+
+        {/* ── Mark list ────────────────────────────────────────── */}
         {result && (
-          <div className={styles.resultSection}>
-            <div className={styles.resultSectionTitle}>Marks</div>
-
-            <div className={styles.markList}>
-              <div className={styles.markRow}>
-                <div className={styles.markDot} style={{ background: 'var(--ion-color-primary)' }} />
-                <div className={styles.markInfo}>
-                  <span className={styles.markLabel}>Mark 1</span>
-                  <span className={styles.markAngle}>{result.thetaDeg}° ↑</span>
-                </div>
-                <div className={styles.markDist}>
-                  {formatDisplay(result.mark1FromEnd, settings.units)}
-                  <span className={styles.markDistLabel}> from end</span>
-                </div>
+          <div className={styles.markList}>
+            <div className={styles.markRow}>
+              <div className={styles.markDot} />
+              <div className={styles.markInfo}>
+                <span className={styles.markLabel}>Mark 1</span>
+                <span className={styles.markAngle}>{result.thetaDeg}° ↑</span>
               </div>
-
-              <div className={styles.markRow}>
-                <div className={styles.markDot} style={{ background: 'var(--ion-color-primary)' }} />
-                <div className={styles.markInfo}>
-                  <span className={styles.markLabel}>Mark 2</span>
-                  <span className={styles.markAngle}>{result.thetaDeg}° ↓</span>
-                </div>
-                <div className={styles.markDist}>
-                  {formatDisplay(result.mark2FromEnd, settings.units)}
-                  <span className={styles.markDistLabel}> from end</span>
-                </div>
+              <div className={styles.markDist}>
+                {formatDisplay(result.mark1FromEnd, settings.units)}
+                <span className={styles.markDistLabel}> from end</span>
               </div>
             </div>
-
-            <div className={styles.resultCards}>
-              <ResultCard label="Between Bends" value={formatDisplay(result.distanceBetweenBends, settings.units)} color="secondary" />
-              <ResultCard label="Shrink" value={formatDisplay(result.shrink, settings.units)} color="secondary" />
-              <ResultCard label="Bend Angle" value={`${result.thetaDeg}°`} color="primary" />
-              <ResultCard label="Rise" value={formatDisplay(result.rise, settings.units)} color="primary" />
+            <div className={styles.markRow}>
+              <div className={styles.markDot} />
+              <div className={styles.markInfo}>
+                <span className={styles.markLabel}>Mark 2</span>
+                <span className={styles.markAngle}>{result.thetaDeg}° ↓</span>
+              </div>
+              <div className={styles.markDist}>
+                {formatDisplay(result.mark2FromEnd, settings.units)}
+                <span className={styles.markDistLabel}> from end</span>
+              </div>
             </div>
           </div>
         )}
+
       </IonContent>
     </IonPage>
-  )
-}
-
-interface ResultCardProps {
-  label: string
-  value: string
-  color: 'primary' | 'secondary' | 'medium'
-}
-
-function ResultCard({ label, value, color }: ResultCardProps): JSX.Element {
-  const ionColor = color === 'primary' ? 'var(--ion-color-primary)' :
-                   color === 'secondary' ? 'var(--ion-color-secondary)' :
-                   'var(--ion-text-color-secondary)'
-  return (
-    <div className={styles.resultCard}>
-      <span className={styles.resultCardLabel} style={{ color: ionColor }}>{label}</span>
-      <span className={styles.resultCardValue}>{value}</span>
-    </div>
   )
 }
