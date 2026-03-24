@@ -6,7 +6,6 @@ import React from 'react'
 import { buildConduitPath } from '../../lib/svgPath'
 import type { Segment } from '../../lib/svgPath'
 import type { OffsetResult } from '../../lib/bendMath'
-import { formatDisplay } from '../../lib/units'
 import type { UnitMode } from '../../lib/units'
 
 interface BendDiagramProps {
@@ -121,10 +120,6 @@ export function BendDiagram({
   const dbbDimX = Math.min(pt0?.x ?? originX, riseX1) - 22
   const dbbY1 = pt0 ? pt0.y : originY
   const dbbY2 = pt2 ? pt2.y : originY + result.distanceBetweenBends * diagramScale
-
-  // Card anchor: right side of diagram (to the right of the offset conduit)
-  const cardAnchorX = Math.max(riseX2, riseX1) + 20
-  const cardW = 88
 
   return (
     <g>
@@ -292,127 +287,38 @@ export function BendDiagram({
         </g>
       )}
 
-      {/* ── Floating result cards (stacked on the right) ──────── */}
+      {/* ── Inline dimension labels ────────────────────────────── */}
 
-      {/* Between Bends */}
+      {/* "B/B" label next to the between-bends dimension line */}
       {pt0 && pt2 && (
-        <ResultCard
-          x={cardAnchorX}
-          y={(dbbY1 + dbbY2) / 2 - 22}
-          width={cardW}
-          label="Between Bends"
-          value={formatDisplay(result.distanceBetweenBends, unitMode)}
-          leaderX={dbbDimX}
-          leaderY={(dbbY1 + dbbY2) / 2}
-        />
+        <text
+          x={dbbDimX - 4}
+          y={(dbbY1 + dbbY2) / 2 + 4}
+          textAnchor="end"
+          fill="var(--dimension-line-color, #4a9eff)"
+          fontSize={9}
+          fontFamily="sans-serif"
+          fontWeight="bold"
+        >
+          B/B
+        </text>
       )}
 
-      {/* Bend Angle */}
-      {pt0 && (
-        <ResultCard
-          x={cardAnchorX}
-          y={pt0.y - 22}
-          width={cardW}
-          label="Bend"
-          value={`${result.thetaDeg}°`}
-          leaderX={pt0.x}
-          leaderY={pt0.y}
-        />
-      )}
-
-      {/* Rise */}
+      {/* "Rise" label next to the rise dimension line */}
       {riseX1 !== riseX2 && (
-        <ResultCard
-          x={cardAnchorX}
-          y={riseDimY - 22}
-          width={cardW}
-          label="Rise"
-          value={formatDisplay(result.rise, unitMode)}
-          leaderX={riseX2 + Math.abs(riseX2 - riseX1) / 2}
-          leaderY={riseDimY}
-        />
-      )}
-
-      {/* Shrink */}
-      {pt4 && (
-        <ResultCard
-          x={cardAnchorX}
-          y={pt4.y - 22}
-          width={cardW}
-          label="Shrink"
-          value={formatDisplay(result.shrink, unitMode)}
-          leaderX={pt4.x}
-          leaderY={pt4.y}
-        />
+        <text
+          x={(riseX1 + riseX2) / 2}
+          y={riseDimY + 12}
+          textAnchor="middle"
+          fill="var(--dimension-line-color, #4a9eff)"
+          fontSize={9}
+          fontFamily="sans-serif"
+          fontWeight="bold"
+        >
+          Rise
+        </text>
       )}
     </g>
   )
 }
 
-// ── ResultCard — SVG floating label card ──────────────────────────────────────
-
-interface ResultCardProps {
-  x: number
-  y: number
-  width: number
-  label: string
-  value: string
-  leaderX: number
-  leaderY: number
-}
-
-function ResultCard({ x, y, width, label, value, leaderX, leaderY }: ResultCardProps): JSX.Element {
-  const cardH = 40
-  const midX = x + width / 2
-  const midY = y + cardH / 2
-
-  return (
-    <g>
-      {/* Dashed leader line from card to diagram point */}
-      <line
-        x1={leaderX}
-        y1={leaderY}
-        x2={x}
-        y2={midY}
-        stroke="var(--dimension-line-color, #4a9eff)"
-        strokeWidth={0.75}
-        strokeDasharray="4,3"
-        opacity={0.7}
-      />
-      {/* Card background */}
-      <rect
-        x={x}
-        y={y}
-        width={width}
-        height={cardH}
-        rx={7}
-        fill="var(--result-card-bg, rgba(28,28,30,0.95))"
-        stroke="var(--dimension-line-color, #4a9eff)"
-        strokeWidth={0.75}
-      />
-      {/* Label */}
-      <text
-        x={midX}
-        y={y + 14}
-        textAnchor="middle"
-        fill="var(--dimension-line-color, #4a9eff)"
-        fontSize={9}
-        fontFamily="sans-serif"
-      >
-        {label}
-      </text>
-      {/* Value */}
-      <text
-        x={midX}
-        y={y + 30}
-        textAnchor="middle"
-        fill="white"
-        fontSize={13}
-        fontFamily="'IBM Plex Mono', 'Courier New', monospace"
-        fontWeight="bold"
-      >
-        {value}
-      </text>
-    </g>
-  )
-}

@@ -2,7 +2,7 @@
 // Root component: IonApp + IonReactRouter with side-drawer navigation.
 
 import React, { useEffect } from 'react'
-import { IonApp, IonRouterOutlet, IonSplitPane, setupIonicReact } from '@ionic/react'
+import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react'
 import { IonReactRouter } from '@ionic/react-router'
 import { Route, Redirect } from 'react-router-dom'
 
@@ -35,19 +35,16 @@ function AppContent(): JSX.Element {
   return (
     <IonApp className={resolvedTheme}>
       <IonReactRouter>
-        <IonSplitPane contentId="main-content">
-          <AppMenu />
-
-          <IonRouterOutlet id="main-content">
-            <Route exact path="/home" component={HomePage} />
-            <Route exact path="/calculator" render={() => <Redirect to="/calculator/offset" />} />
-            <Route path="/calculator/:bendType" component={CalculatorPage} />
-            <Route exact path="/bender-specs" component={BenderSpecsPage} />
-            <Route exact path="/settings" component={SettingsPage} />
-            <Route exact path="/about" component={AboutPage} />
-            <Route exact path="/" render={() => <Redirect to="/calculator/offset" />} />
-          </IonRouterOutlet>
-        </IonSplitPane>
+        <AppMenu />
+        <IonRouterOutlet id="main-content">
+          <Route exact path="/home" component={HomePage} />
+          <Route exact path="/calculator" render={() => <Redirect to="/calculator/offset" />} />
+          <Route path="/calculator/:bendType" component={CalculatorPage} />
+          <Route exact path="/bender-specs" component={BenderSpecsPage} />
+          <Route exact path="/settings" component={SettingsPage} />
+          <Route exact path="/about" component={AboutPage} />
+          <Route exact path="/" render={() => <Redirect to="/calculator/offset" />} />
+        </IonRouterOutlet>
       </IonReactRouter>
     </IonApp>
   )

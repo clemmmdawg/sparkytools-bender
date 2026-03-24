@@ -1,5 +1,5 @@
 // src/pages/Calculator/OffsetCalculator.tsx
-// Offset calculator — inputs (rise, bend angle), visualizer, results.
+// Offset calculator — inputs integrated into visualizer card, results below.
 
 import React, { useState, useMemo } from 'react'
 import {
@@ -12,7 +12,6 @@ import {
   IonMenuButton,
   IonCard,
   IonCardContent,
-  IonActionSheet,
   IonChip,
   IonIcon,
   IonLabel,
@@ -22,34 +21,23 @@ import {
   warningOutline,
   checkmarkCircleOutline,
   alertCircleOutline,
-  chevronUpOutline,
-  chevronDownOutline,
   ellipsisVertical,
-  constructOutline,
-  settingsOutline,
-  homeOutline,
 } from 'ionicons/icons'
-import { useHistory } from 'react-router-dom'
 import { computeOffset } from '../../lib/bendMath'
 import { formatDisplay } from '../../lib/units'
 import { CompositeVisualizer } from '../../components/CompositeVisualizer'
-import { InputRow } from '../../components/InputRow'
 import { useBender } from '../../hooks/useBender'
 import { useSettings } from '../../hooks/useSettings'
 import styles from './Calculator.module.css'
 
-// Common offset angles
 const QUICK_ANGLES = [10, 15, 22.5, 30, 45]
 
 export function OffsetCalculator(): JSX.Element {
   const { selectedShoe, selectedBender } = useBender()
   const { settings } = useSettings()
-  const history = useHistory()
 
   const [riseStr, setRiseStr] = useState('6')
   const [thetaStr, setThetaStr] = useState('22.5')
-  const [inputsExpanded, setInputsExpanded] = useState(true)
-  const [showActionSheet, setShowActionSheet] = useState(false)
 
   const rise = parseFloat(riseStr) || 0
   const thetaDeg = parseFloat(thetaStr) || 22.5
@@ -73,38 +61,17 @@ export function OffsetCalculator(): JSX.Element {
     result?.validity === 'warning' ? warningOutline :
     checkmarkCircleOutline
 
-  const actionSheetButtons = [
-    {
-      text: 'Change Bender',
-      icon: homeOutline,
-      handler: () => history.push('/home'),
-    },
-    {
-      text: 'Bender Specs',
-      icon: constructOutline,
-      handler: () => history.push('/bender-specs'),
-    },
-    {
-      text: 'Settings',
-      icon: settingsOutline,
-      handler: () => history.push('/settings'),
-    },
-    { text: 'Cancel', role: 'cancel' },
-  ]
+  const unitLabel = settings.units === 'cm' ? 'cm' : '"'
 
   if (!selectedShoe) {
     return (
       <IonPage>
         <IonHeader>
           <IonToolbar>
-            <IonButtons slot="start">
-              <IonMenuButton />
-            </IonButtons>
+            <IonButtons slot="start"><IonMenuButton /></IonButtons>
             <IonTitle>Offset</IonTitle>
             <IonButtons slot="end">
-              <IonButton onClick={() => setShowActionSheet(true)}>
-                <IonIcon slot="icon-only" icon={ellipsisVertical} />
-              </IonButton>
+              <IonButton disabled><IonIcon slot="icon-only" icon={ellipsisVertical} /></IonButton>
             </IonButtons>
           </IonToolbar>
         </IonHeader>
@@ -114,11 +81,6 @@ export function OffsetCalculator(): JSX.Element {
             <p>Open the menu and select a bender to begin.</p>
           </div>
         </IonContent>
-        <IonActionSheet
-          isOpen={showActionSheet}
-          onDidDismiss={() => setShowActionSheet(false)}
-          buttons={actionSheetButtons}
-        />
       </IonPage>
     )
   }
@@ -127,9 +89,7 @@ export function OffsetCalculator(): JSX.Element {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonButtons slot="start">
-            <IonMenuButton />
-          </IonButtons>
+          <IonButtons slot="start"><IonMenuButton /></IonButtons>
           <IonTitle>Offset</IonTitle>
           <IonButtons slot="end">
             {result && (
@@ -138,7 +98,7 @@ export function OffsetCalculator(): JSX.Element {
                 <IonLabel>{result.validity === 'ok' ? 'Valid' : result.validity}</IonLabel>
               </IonChip>
             )}
-            <IonButton onClick={() => setShowActionSheet(true)}>
+            <IonButton disabled>
               <IonIcon slot="icon-only" icon={ellipsisVertical} />
             </IonButton>
           </IonButtons>
@@ -146,86 +106,73 @@ export function OffsetCalculator(): JSX.Element {
       </IonHeader>
 
       <IonContent>
-        {/* Bender info bar */}
-        <div className={styles.benderBar}>
-          <span className={styles.benderBarText}>
-            {selectedBender?.manufacturer} {selectedBender?.model} — {selectedShoe.tradeSize}" {selectedShoe.conduitType}
-          </span>
-          <span className={styles.benderBarMeta}>CLR {selectedShoe.centerlineRadius}" · Deduct {selectedShoe.deduct}"</span>
-        </div>
-
-        {/* Input section (collapsible) */}
-        <div className={styles.inputSection}>
-          <button
-            className={styles.inputToggle}
-            onClick={() => setInputsExpanded(e => !e)}
-          >
-            <span className={styles.inputToggleLabel}>Inputs</span>
-            <IonIcon icon={inputsExpanded ? chevronUpOutline : chevronDownOutline} />
-          </button>
-
-          {inputsExpanded && (
-            <div className={styles.inputs}>
-              <InputRow
-                label="Rise"
-                value={riseStr}
-                onChange={setRiseStr}
-                unit={settings.units === 'cm' ? 'cm' : '"'}
-                placeholder="6"
-                validity={result?.validity ?? 'ok'}
-                hint={result?.validityMessage}
-                inputMode="decimal"
-                min={0}
-              />
-              <div className={styles.angleRow}>
-                <InputRow
-                  label="Angle"
-                  value={thetaStr}
-                  onChange={setThetaStr}
-                  unit="°"
-                  placeholder="22.5"
-                  inputMode="decimal"
-                  min={1}
-                  max={89}
-                />
-                <div className={styles.quickAngles}>
-                  {QUICK_ANGLES.map(a => (
-                    <button
-                      key={a}
-                      className={`${styles.angleChip} ${parseFloat(thetaStr) === a ? styles.angleChipActive : ''}`}
-                      onClick={() => setThetaStr(String(a))}
-                    >
-                      {a}°
-                    </button>
-                  ))}
-                </div>
-              </div>
+        {/* ── Visualizer card with integrated inputs ─────────── */}
+        <div className={styles.vizCard}>
+          {/* Diagram area */}
+          {result && result.validity !== 'error' ? (
+            <CompositeVisualizer result={result} unitMode={settings.units} />
+          ) : result?.validity === 'error' ? (
+            <div className={styles.errorState}>
+              <IonIcon icon={alertCircleOutline} color="danger" className={styles.errorIcon} />
+              <p className={styles.errorMsg}>{result.validityMessage ?? 'Invalid inputs'}</p>
+            </div>
+          ) : (
+            <div className={styles.emptyState}>
+              <p>Enter rise and angle above to see the bend diagram.</p>
             </div>
           )}
+
+          {/* Inputs integrated at the bottom of the viz card */}
+          <div className={styles.vizInputRow}>
+            <div className={styles.vizInputGroup}>
+              <span className={styles.vizInputLabel}>Rise</span>
+              <input
+                className={styles.vizInput}
+                type="number"
+                inputMode="decimal"
+                value={riseStr}
+                min={0}
+                onChange={e => setRiseStr(e.target.value)}
+              />
+              <span className={styles.vizInputUnit}>{unitLabel}</span>
+            </div>
+
+            <div className={styles.vizInputDivider} />
+
+            <div className={styles.vizInputGroup}>
+              <span className={styles.vizInputLabel}>Angle</span>
+              <input
+                className={styles.vizInput}
+                type="number"
+                inputMode="decimal"
+                value={thetaStr}
+                min={1}
+                max={89}
+                onChange={e => setThetaStr(e.target.value)}
+              />
+              <span className={styles.vizInputUnit}>°</span>
+            </div>
+          </div>
+
+          {/* Quick-select angle chips */}
+          <div className={styles.quickAngles}>
+            {QUICK_ANGLES.map(a => (
+              <button
+                key={a}
+                className={`${styles.angleChip} ${parseFloat(thetaStr) === a ? styles.angleChipActive : ''}`}
+                onClick={() => setThetaStr(String(a))}
+              >
+                {a}°
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Visualizer */}
-        {result && result.validity !== 'error' ? (
-          <div className={styles.visualizerWrap}>
-            <CompositeVisualizer result={result} unitMode={settings.units} />
-          </div>
-        ) : result?.validity === 'error' ? (
-          <div className={styles.errorState}>
-            <IonIcon icon={alertCircleOutline} color="danger" className={styles.errorIcon} />
-            <p className={styles.errorMsg}>{result.validityMessage ?? 'Invalid inputs'}</p>
-          </div>
-        ) : (
-          <div className={styles.emptyState}>
-            <p>Enter rise and angle to see the bend diagram.</p>
-          </div>
-        )}
-
-        {/* Scrollable results */}
+        {/* ── Scrollable results ──────────────────────────────── */}
         {result && (
           <div className={styles.resultSection}>
             <div className={styles.resultSectionTitle}>Marks &amp; Results</div>
 
-            {/* Mark rows */}
             <div className={styles.markList}>
               <div className={styles.markRow}>
                 <div className={styles.markDot} style={{ background: 'var(--ion-color-primary)' }} />
@@ -252,41 +199,15 @@ export function OffsetCalculator(): JSX.Element {
               </div>
             </div>
 
-            {/* Result cards */}
             <div className={styles.resultCards}>
-              <ResultCard
-                label="Between Bends"
-                value={formatDisplay(result.distanceBetweenBends, settings.units)}
-                color="secondary"
-              />
-              <ResultCard
-                label="Shrink"
-                value={formatDisplay(result.shrink, settings.units)}
-                color="secondary"
-              />
-              <ResultCard
-                label="Bend Angle"
-                value={`${result.thetaDeg}°`}
-                color="primary"
-              />
-              <ResultCard
-                label="Rise"
-                value={formatDisplay(result.rise, settings.units)}
-                color="primary"
-              />
-              <ResultCard
-                label="Dev. Length"
-                value={formatDisplay(result.developedLength, settings.units)}
-                color="medium"
-              />
-              <ResultCard
-                label="Gain"
-                value={formatDisplay(result.gain, settings.units)}
-                color="medium"
-              />
+              <ResultCard label="Between Bends" value={formatDisplay(result.distanceBetweenBends, settings.units)} color="secondary" />
+              <ResultCard label="Shrink" value={formatDisplay(result.shrink, settings.units)} color="secondary" />
+              <ResultCard label="Bend Angle" value={`${result.thetaDeg}°`} color="primary" />
+              <ResultCard label="Rise" value={formatDisplay(result.rise, settings.units)} color="primary" />
+              <ResultCard label="Dev. Length" value={formatDisplay(result.developedLength, settings.units)} color="medium" />
+              <ResultCard label="Gain" value={formatDisplay(result.gain, settings.units)} color="medium" />
             </div>
 
-            {/* Instruction notes */}
             <IonCard className={styles.instructionCard}>
               <IonCardContent>
                 <ol className={styles.instructions}>
@@ -294,19 +215,13 @@ export function OffsetCalculator(): JSX.Element {
                   <li>Bend <strong>{result.thetaDeg}°</strong> upward at Mark 1.</li>
                   <li>Measure <strong>{formatDisplay(result.distanceBetweenBends, settings.units)}</strong> from Mark 1 to Mark 2.</li>
                   <li>Bend <strong>{result.thetaDeg}°</strong> downward at Mark 2 (reverse direction).</li>
-                  <li>Your run will be <strong>{formatDisplay(result.shrink, settings.units)}</strong> shorter than measured — deduct this from your total length.</li>
+                  <li>Your run will be <strong>{formatDisplay(result.shrink, settings.units)}</strong> shorter — deduct from total length.</li>
                 </ol>
               </IonCardContent>
             </IonCard>
           </div>
         )}
       </IonContent>
-
-      <IonActionSheet
-        isOpen={showActionSheet}
-        onDidDismiss={() => setShowActionSheet(false)}
-        buttons={actionSheetButtons}
-      />
     </IonPage>
   )
 }
