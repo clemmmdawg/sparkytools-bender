@@ -16,6 +16,7 @@ import { useSettings } from './hooks/useSettings'
 
 setupIonicReact({
   mode: 'ios',
+  swipeBackEnabled: false,
 })
 
 function AppContent(): JSX.Element {

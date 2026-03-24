@@ -1,5 +1,11 @@
 /* Sparky Tools: Bender — Ionic CSS Variable Overrides */
 
+/* ── Prevent browser swipe-to-navigate and overscroll glow ───────────────── */
+html, body {
+  overscroll-behavior: none;
+  touch-action: pan-y;
+}
+
 /* ── Dark theme (default) ────────────────────────────── */
 :root,
 .dark {
