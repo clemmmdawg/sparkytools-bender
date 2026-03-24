@@ -1,144 +1,152 @@
-.benderBar {
+/* ── Bender chip row ────────────────────────────────────────────────────── */
+
+.benderRow {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px 4px;
+  flex-wrap: wrap;
+}
+
+.benderChip {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ion-text-color-secondary);
+  letter-spacing: 0.04em;
+}
+
+/* ── Diagram container (relative, aspect-ratio 4:3) ─────────────────────── */
+
+.diagramContainer {
+  position: relative;
+  margin: 4px 12px 8px;
+  border-radius: 14px;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  background: #0f0f0f;
+}
+
+.diagramSvg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Floating card column (overlaid on right side of diagram) ────────────── */
+
+.cardCol {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  bottom: 8px;
+  width: 112px;
   display: flex;
   flex-direction: column;
-  padding: 8px 16px;
-  background: var(--ion-surface-color);
-  border-bottom: 1px solid var(--ion-color-step-100);
+  justify-content: space-evenly;
+  gap: 5px;
+  pointer-events: none;
 }
 
-.benderBarText {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ion-text-color);
-}
-
-.benderBarMeta {
-  font-size: 11px;
-  color: var(--ion-text-color-secondary);
-  font-family: 'IBM Plex Mono', monospace;
-  margin-top: 2px;
-}
-
-.inputSection {
-  background: var(--ion-surface-color);
-  margin: 10px 12px;
-  border-radius: 10px;
-  overflow: hidden;
-  border: 1px solid var(--ion-color-step-150);
-}
-
-.inputToggle {
+.fCard {
+  background: rgba(14, 14, 16, 0.92);
+  border: 1px solid rgba(74, 158, 255, 0.5);
+  border-radius: 9px;
+  padding: 6px 9px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 12px 16px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--ion-text-color);
-  font-size: 13px;
+  flex-direction: column;
+  gap: 3px;
+  pointer-events: auto;
+}
+
+.fLabel {
+  font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
+  color: #4a9eff;
 }
 
-.inputToggleLabel {
-  color: var(--ion-text-color-secondary);
+.fValue {
+  font-size: 15px;
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.inputs {
-  padding-bottom: 8px;
-  border-top: 1px solid var(--ion-color-step-100);
+.fInputRow {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
 }
 
-.angleRow {
-  /* stacks InputRow and quick-angle chips vertically */
+.fInput {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  font-weight: 700;
+  color: #ffffff;
+  -moz-appearance: textfield;
+  padding: 0;
 }
+
+.fInput::-webkit-outer-spin-button,
+.fInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.fUnit {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+  flex-shrink: 0;
+}
+
+/* ── Quick angle chips ───────────────────────────────────────────────────── */
 
 .quickAngles {
   display: flex;
   gap: 6px;
-  padding: 4px 16px 8px;
+  padding: 2px 12px 10px;
   flex-wrap: wrap;
 }
 
 .angleChip {
-  background: var(--ion-color-step-100);
-  border: 1.5px solid var(--ion-color-step-200);
+  background: var(--ion-color-step-100, rgba(255,255,255,0.06));
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
-  padding: 4px 12px;
+  padding: 5px 12px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--ion-text-color-secondary);
+  color: var(--ion-text-color-secondary, #8e8e93);
   cursor: pointer;
   transition: all 0.12s;
 }
 
 .angleChipActive {
-  background: var(--ion-color-primary);
-  border-color: var(--ion-color-primary);
-  color: var(--ion-color-primary-contrast);
+  background: var(--ion-color-primary, #f5a623);
+  border-color: var(--ion-color-primary, #f5a623);
+  color: var(--ion-color-primary-contrast, #000);
 }
 
-.validityChip {
-  font-size: 12px;
-}
-
-.visualizerWrap {
-  margin: 0 12px 12px;
-}
-
-.emptyState {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 200px;
-  color: var(--ion-text-color-secondary);
-  font-size: 14px;
-  text-align: center;
-  padding: 0 24px;
-}
-
-.errorState {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 160px;
-  gap: 8px;
-}
-
-.errorIcon {
-  font-size: 36px;
-}
-
-.errorMsg {
-  color: var(--ion-color-danger);
-  font-size: 14px;
-  text-align: center;
-  padding: 0 24px;
-}
-
-.resultSection {
-  padding: 0 0 80px;
-}
-
-.resultSectionTitle {
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ion-text-color-secondary);
-  padding: 8px 16px 4px;
-}
+/* ── Mark list ───────────────────────────────────────────────────────────── */
 
 .markList {
-  margin: 0 12px 10px;
-  background: var(--ion-surface-color);
+  margin: 0 12px 80px;
+  background: var(--ion-surface-color, #1c1c1e);
   border-radius: 10px;
   overflow: hidden;
-  border: 1px solid var(--ion-color-step-150);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .markRow {
@@ -146,7 +154,7 @@
   align-items: center;
   padding: 12px 14px;
   gap: 10px;
-  border-bottom: 1px solid var(--ion-color-step-100);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .markRow:last-child {
@@ -157,6 +165,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
+  background: #4a9eff;
   flex-shrink: 0;
 }
 
@@ -169,12 +178,12 @@
 .markLabel {
   font-size: 14px;
   font-weight: 600;
-  color: var(--ion-text-color);
+  color: var(--ion-text-color, #f0f0f0);
 }
 
 .markAngle {
   font-size: 12px;
-  color: var(--ion-text-color-secondary);
+  color: var(--ion-text-color-secondary, #8e8e93);
   font-family: 'IBM Plex Mono', monospace;
 }
 
@@ -182,61 +191,17 @@
   font-size: 16px;
   font-family: 'IBM Plex Mono', monospace;
   font-weight: 700;
-  color: var(--ion-text-color);
+  color: var(--ion-text-color, #f0f0f0);
+  text-align: right;
 }
 
 .markDistLabel {
   font-size: 11px;
   font-weight: 400;
-  color: var(--ion-text-color-secondary);
+  color: var(--ion-text-color-secondary, #8e8e93);
 }
 
-.resultCards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin: 0 12px 12px;
-}
-
-.resultCard {
-  background: var(--ion-surface-color);
-  border: 1px solid var(--ion-color-step-150);
-  border-radius: 10px;
-  padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.resultCardLabel {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-}
-
-.resultCardValue {
-  font-size: 18px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-weight: 700;
-  color: var(--ion-text-color);
-}
-
-.instructionCard {
-  margin: 0 12px 16px;
-}
-
-.instructions {
-  padding-left: 20px;
-  margin: 0;
-}
-
-.instructions li {
-  font-size: 14px;
-  color: var(--ion-text-color);
-  line-height: 1.6;
-  margin-bottom: 6px;
-}
+/* ── No bender selected state ────────────────────────────────────────────── */
 
 .noBenderPrompt {
   display: flex;
@@ -245,12 +210,13 @@
   justify-content: center;
   height: 60vh;
   gap: 16px;
-  color: var(--ion-text-color-secondary);
+  color: var(--ion-text-color-secondary, #8e8e93);
   text-align: center;
   font-size: 15px;
+  padding: 0 32px;
 }
 
 .noBenderIcon {
   font-size: 48px;
-  color: var(--ion-text-color-secondary);
+  color: var(--ion-text-color-secondary, #8e8e93);
 }

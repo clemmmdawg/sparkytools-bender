@@ -8,6 +8,8 @@ import {
   IonToolbar,
   IonTitle,
   IonPage,
+  IonButtons,
+  IonMenuButton,
   IonCard,
   IonCardContent,
   IonCardHeader,
@@ -52,6 +54,9 @@ export function BenderSpecsPage(): JSX.Element {
     <IonPage>
       <IonHeader>
         <IonToolbar>
+          <IonButtons slot="start">
+              <IonMenuButton />
+            </IonButtons>
           <IonTitle>Bender Specs</IonTitle>
         </IonToolbar>
       </IonHeader>

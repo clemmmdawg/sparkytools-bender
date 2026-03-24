@@ -8,6 +8,8 @@ import {
   IonToolbar,
   IonTitle,
   IonPage,
+  IonButtons,
+  IonMenuButton,
   IonList,
   IonItem,
   IonLabel,
@@ -31,6 +33,9 @@ export function SettingsPage(): JSX.Element {
     <IonPage>
       <IonHeader>
         <IonToolbar>
+          <IonButtons slot="start">
+            <IonMenuButton />
+          </IonButtons>
           <IonTitle>Settings</IonTitle>
         </IonToolbar>
       </IonHeader>
