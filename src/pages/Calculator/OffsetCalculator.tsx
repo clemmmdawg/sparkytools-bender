@@ -25,6 +25,9 @@ import styles from './Calculator.module.css'
 const QUICK_ANGLES = [10, 15, 22.5, 30, 45]
 const LEG_IN = 6        // straight leg length shown in diagram (inches)
 const TUBE_IN = 0.75    // visual tube width (inches)
+// Fixed reference distance used solely for computing diagram scale.
+// Rise input never affects visual size — only angle changes the shape.
+const DISPLAY_DIST = 14  // inches
 
 const VALIDITY_COLORS: Record<string, string> = {
   ok: '#30d158',
@@ -53,12 +56,31 @@ export function OffsetCalculator(): JSX.Element {
     catch { return null }
   }, [rise, thetaDeg, selectedShoe])
 
-  // Build the conduit SVG path, auto-fitted to the viewBox
+  // Build the conduit SVG path.
+  // Scale is derived from a FIXED reference distance (DISPLAY_DIST) so that
+  // the diagram size never changes when rise changes — only the angle affects shape.
   const diagram = useMemo(() => {
     if (!result) return null
 
+    // Formula: centerline radius from developed length and angle
     const r = result.developedLength / (Math.PI * (thetaDeg / 180)) || 4
 
+    // Reference segments — use fixed DISPLAY_DIST to compute a stable scale
+    const refSegments: Segment[] = [
+      { type: 'line', length: LEG_IN },
+      { type: 'arc', radius: r, angleDeg: thetaDeg, sweepFlag: 0 },
+      { type: 'line', length: DISPLAY_DIST },
+      { type: 'arc', radius: r, angleDeg: thetaDeg, sweepFlag: 1 },
+      { type: 'line', length: LEG_IN },
+    ]
+    const refBb = buildConduitPath(refSegments, 0, 0, 90, 1).boundingBox
+    const pad = 20
+    const scale = Math.min(
+      refBb.width  > 0 ? (VW - pad * 2) / refBb.width  : 1,
+      refBb.height > 0 ? (VH - pad * 2) / refBb.height : 1,
+    )
+
+    // Actual segments use the real distanceBetweenBends — centered at fixed scale
     const segments: Segment[] = [
       { type: 'line', length: LEG_IN },
       { type: 'arc', radius: r, angleDeg: thetaDeg, sweepFlag: 0 },
@@ -66,16 +88,9 @@ export function OffsetCalculator(): JSX.Element {
       { type: 'arc', radius: r, angleDeg: thetaDeg, sweepFlag: 1 },
       { type: 'line', length: LEG_IN },
     ]
-
-    const raw  = buildConduitPath(segments, 0, 0, 90, 1)
-    const bb   = raw.boundingBox
-    const pad  = 20
-    const scale = Math.min(
-      bb.width  > 0 ? (VW - pad * 2) / bb.width  : 1,
-      bb.height > 0 ? (VH - pad * 2) / bb.height : 1,
-    )
-    const ox = pad + (VW - pad * 2 - bb.width  * scale) / 2 - bb.x * scale
-    const oy = pad + (VH - pad * 2 - bb.height * scale) / 2 - bb.y * scale
+    const rawBb = buildConduitPath(segments, 0, 0, 90, 1).boundingBox
+    const ox = VW / 2 - (rawBb.x + rawBb.width  / 2) * scale
+    const oy = VH / 2 - (rawBb.y + rawBb.height / 2) * scale
 
     const fin = buildConduitPath(segments, ox, oy, 90, scale)
     const eps = fin.segmentEndpoints
