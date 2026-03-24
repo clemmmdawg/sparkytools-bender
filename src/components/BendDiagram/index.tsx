@@ -13,6 +13,8 @@ interface BendDiagramProps {
   width: number
   height: number
   result: OffsetResult
+  /** Pre-computed layout from CompositeVisualizer for alignment. Falls back to auto-fit if absent. */
+  layoutOverride?: { originX: number; originY: number; scale: number }
 }
 
 const TUBE_WIDTH_INCHES = 0.75
@@ -28,7 +30,7 @@ const VALIDITY_COLORS: Record<string, string> = {
 let _diagId = 0
 function nextDiagId() { return `bd-${++_diagId}` }
 
-export function BendDiagram({ x, y, width, height, result }: BendDiagramProps): JSX.Element {
+export function BendDiagram({ x, y, width, height, result, layoutOverride }: BendDiagramProps): JSX.Element {
   const idPrefix = React.useRef(nextDiagId()).current
   const bendColor = VALIDITY_COLORS[result.validity] ?? VALIDITY_COLORS.ok
 
@@ -45,20 +47,27 @@ export function BendDiagram({ x, y, width, height, result }: BendDiagramProps): 
     { type: 'line', length: LEG_LENGTH_INCHES },
   ]
 
-  const rawPath = buildConduitPath(segments, 0, 0, 90, 1)
-  const bb = rawPath.boundingBox
+  let originX: number
+  let originY: number
+  let scale: number
 
-  const pad = Math.min(width, height) * PADDING_FRACTION
-  const drawW = width - pad * 2
-  const drawH = height - pad * 2
-
-  const scale = Math.min(
-    bb.width  > 0 ? drawW / bb.width  : 1,
-    bb.height > 0 ? drawH / bb.height : 1,
-  )
-
-  const originX = x + pad + (drawW - bb.width  * scale) / 2 - bb.x * scale
-  const originY = y + pad + (drawH - bb.height * scale) / 2 - bb.y * scale
+  if (layoutOverride) {
+    // Use parent-supplied layout so diagram aligns with the conduit strip
+    ;({ originX, originY, scale } = layoutOverride)
+  } else {
+    // Auto-fit to available area (used when rendered standalone)
+    const rawPath = buildConduitPath(segments, 0, 0, 90, 1)
+    const bb = rawPath.boundingBox
+    const pad = Math.min(width, height) * PADDING_FRACTION
+    const drawW = width - pad * 2
+    const drawH = height - pad * 2
+    scale = Math.min(
+      bb.width  > 0 ? drawW / bb.width  : 1,
+      bb.height > 0 ? drawH / bb.height : 1,
+    )
+    originX = x + pad + (drawW - bb.width  * scale) / 2 - bb.x * scale
+    originY = y + pad + (drawH - bb.height * scale) / 2 - bb.y * scale
+  }
 
   const pathResult = buildConduitPath(segments, originX, originY, 90, scale)
   const eps = pathResult.segmentEndpoints
