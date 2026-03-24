@@ -73,34 +73,25 @@ export function CompositeVisualizer({ result, unitMode }: CompositeVisualizerPro
       { type: 'line', length: LEG_LENGTH_INCHES },
     ]
 
-    // Raw path at scale=1 — used to determine raw endpoint positions
+    // Fixed scale — never changes with inputs. 1 inch = SVG_H / DISPLAY_LENGTH pixels.
+    const scale = SVG_H / DISPLAY_LENGTH
+
+    // Get raw bounding box for horizontal centering
     const rawPath = buildConduitPath(segments, 0, 0, 90, 1)
     const bb      = rawPath.boundingBox
-    const rawEps  = rawPath.segmentEndpoints
 
-    // pt0_raw = end of first leg (y = LEG_LENGTH = 6)
-    // pt2_raw = end of middle leg
-    const pt0_rawY = rawEps[0]?.y ?? LEG_LENGTH_INCHES
-    const pt2_rawY = rawEps[2]?.y ?? (LEG_LENGTH_INCHES + result.distanceBetweenBends)
+    // Strip mark positions at the same fixed scale
+    const mark1Y = Math.min(result.mark1FromEnd * scale, SVG_H - 60)
+    const mark2Y = Math.min(result.mark2FromEnd * scale, SVG_H - 20)
 
-    // Strip mark positions — fixed fractional positions on the 36" stick
-    const mark1Y = Math.min(result.mark1FromEnd / DISPLAY_LENGTH * SVG_H, SVG_H - 60)
-    const mark2Y = Math.min(result.mark2FromEnd / DISPLAY_LENGTH * SVG_H, SVG_H - 20)
+    // Align pt0 (end of first straight leg, y_raw = LEG_LENGTH) with mark1Y
+    const originY = mark1Y - LEG_LENGTH_INCHES * scale
 
-    // Scale the diagram so that pt0 lands at mark1Y and pt2 lands at mark2Y.
-    // This ensures bend arcs on the diagram align horizontally with strip marks.
-    const rawSpanY     = pt2_rawY - pt0_rawY
-    const desiredSpanY = Math.max(mark2Y - mark1Y, 20)  // avoid degenerate scale
-    const scale        = rawSpanY > 0.001 ? desiredSpanY / rawSpanY : 8
-
-    // originY: shift so that pt0 lands at mark1Y
-    const originY = mark1Y - pt0_rawY * scale
-
-    // originX: center the path horizontally in the diagram zone
+    // Center the path horizontally in the diagram zone
     const centerRawX = bb.x + bb.width / 2
     const originX    = DIAG_X + DIAG_W / 2 - centerRawX * scale
 
-    // Build the final path at the computed scale + origin
+    // Build final path at fixed scale
     const finalPath = buildConduitPath(segments, originX, originY, 90, scale)
     const eps        = finalPath.segmentEndpoints
 
@@ -189,6 +180,9 @@ export function CompositeVisualizer({ result, unitMode }: CompositeVisualizerPro
           <marker id="cv-arr" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
             <path d="M0,0 L7,3.5 L0,7 Z" fill="#4a9eff" opacity={0.9} />
           </marker>
+          <clipPath id="diag-zone-clip">
+            <rect x={DIAG_X} y={0} width={DIAG_W} height={SVG_H} />
+          </clipPath>
         </defs>
 
         {/* ── Left zone: straight conduit strip ── */}
@@ -199,12 +193,14 @@ export function CompositeVisualizer({ result, unitMode }: CompositeVisualizerPro
         />
 
         {/* ── Right zone: bent conduit (pre-computed layout for alignment) ── */}
-        <BendDiagram
-          x={DIAG_X} y={0}
-          width={DIAG_W} height={SVG_H}
-          result={result}
-          layoutOverride={{ originX, originY, scale }}
-        />
+        <g clipPath="url(#diag-zone-clip)">
+          <BendDiagram
+            x={DIAG_X} y={0}
+            width={DIAG_W} height={SVG_H}
+            result={result}
+            layoutOverride={{ originX, originY, scale }}
+          />
+        </g>
 
         {/* ── Center zone: annotated result cards ── */}
         {cards.map((card, i) => {
