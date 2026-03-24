@@ -18,10 +18,10 @@ import {
   IonRow,
   IonCol,
   IonButton,
+  IonButtons,
+  IonMenuButton,
   IonIcon,
   IonLabel,
-  IonSegment,
-  IonSegmentButton,
   IonBadge,
 } from '@ionic/react'
 import { useHistory } from 'react-router-dom'
@@ -100,7 +100,10 @@ export function HomePage(): JSX.Element {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Sparky Tools: Bender</IonTitle>
+          <IonButtons slot="start">
+            <IonMenuButton />
+          </IonButtons>
+          <IonTitle>Bender Setup</IonTitle>
         </IonToolbar>
       </IonHeader>
 

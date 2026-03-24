@@ -8,20 +8,28 @@ import {
   IonToolbar,
   IonTitle,
   IonPage,
-  IonBackButton,
   IonButtons,
+  IonMenuButton,
   IonCard,
   IonCardContent,
-  IonCardHeader,
-  IonCardTitle,
-  IonAlert,
+  IonActionSheet,
   IonChip,
   IonIcon,
   IonLabel,
   IonButton,
-  IonNote,
 } from '@ionic/react'
-import { warningOutline, checkmarkCircleOutline, alertCircleOutline, chevronUpOutline, chevronDownOutline } from 'ionicons/icons'
+import {
+  warningOutline,
+  checkmarkCircleOutline,
+  alertCircleOutline,
+  chevronUpOutline,
+  chevronDownOutline,
+  ellipsisVertical,
+  constructOutline,
+  settingsOutline,
+  homeOutline,
+} from 'ionicons/icons'
+import { useHistory } from 'react-router-dom'
 import { computeOffset } from '../../lib/bendMath'
 import { formatDisplay } from '../../lib/units'
 import { CompositeVisualizer } from '../../components/CompositeVisualizer'
@@ -36,10 +44,12 @@ const QUICK_ANGLES = [10, 15, 22.5, 30, 45]
 export function OffsetCalculator(): JSX.Element {
   const { selectedShoe, selectedBender } = useBender()
   const { settings } = useSettings()
+  const history = useHistory()
 
   const [riseStr, setRiseStr] = useState('6')
   const [thetaStr, setThetaStr] = useState('22.5')
   const [inputsExpanded, setInputsExpanded] = useState(true)
+  const [showActionSheet, setShowActionSheet] = useState(false)
 
   const rise = parseFloat(riseStr) || 0
   const thetaDeg = parseFloat(thetaStr) || 22.5
@@ -63,23 +73,52 @@ export function OffsetCalculator(): JSX.Element {
     result?.validity === 'warning' ? warningOutline :
     checkmarkCircleOutline
 
+  const actionSheetButtons = [
+    {
+      text: 'Change Bender',
+      icon: homeOutline,
+      handler: () => history.push('/home'),
+    },
+    {
+      text: 'Bender Specs',
+      icon: constructOutline,
+      handler: () => history.push('/bender-specs'),
+    },
+    {
+      text: 'Settings',
+      icon: settingsOutline,
+      handler: () => history.push('/settings'),
+    },
+    { text: 'Cancel', role: 'cancel' },
+  ]
+
   if (!selectedShoe) {
     return (
       <IonPage>
         <IonHeader>
           <IonToolbar>
             <IonButtons slot="start">
-              <IonBackButton defaultHref="/home" />
+              <IonMenuButton />
             </IonButtons>
             <IonTitle>Offset</IonTitle>
+            <IonButtons slot="end">
+              <IonButton onClick={() => setShowActionSheet(true)}>
+                <IonIcon slot="icon-only" icon={ellipsisVertical} />
+              </IonButton>
+            </IonButtons>
           </IonToolbar>
         </IonHeader>
         <IonContent className="ion-padding">
           <div className={styles.noBenderPrompt}>
             <IonIcon icon={alertCircleOutline} className={styles.noBenderIcon} />
-            <p>Select a bender on the Home tab to begin.</p>
+            <p>Open the menu and select a bender to begin.</p>
           </div>
         </IonContent>
+        <IonActionSheet
+          isOpen={showActionSheet}
+          onDidDismiss={() => setShowActionSheet(false)}
+          buttons={actionSheetButtons}
+        />
       </IonPage>
     )
   }
@@ -89,17 +128,20 @@ export function OffsetCalculator(): JSX.Element {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/home" />
+            <IonMenuButton />
           </IonButtons>
           <IonTitle>Offset</IonTitle>
-          {result && (
-            <IonButtons slot="end">
+          <IonButtons slot="end">
+            {result && (
               <IonChip color={validityColor} className={styles.validityChip}>
                 <IonIcon icon={validityIcon} />
                 <IonLabel>{result.validity === 'ok' ? 'Valid' : result.validity}</IonLabel>
               </IonChip>
-            </IonButtons>
-          )}
+            )}
+            <IonButton onClick={() => setShowActionSheet(true)}>
+              <IonIcon slot="icon-only" icon={ellipsisVertical} />
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
 
@@ -259,6 +301,12 @@ export function OffsetCalculator(): JSX.Element {
           </div>
         )}
       </IonContent>
+
+      <IonActionSheet
+        isOpen={showActionSheet}
+        onDidDismiss={() => setShowActionSheet(false)}
+        buttons={actionSheetButtons}
+      />
     </IonPage>
   )
 }

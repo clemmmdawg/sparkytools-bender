@@ -1,0 +1,166 @@
+.menu {
+  --width: 280px;
+}
+
+.menuToolbar {
+  --background: var(--ion-surface-color);
+  padding: 8px 16px 4px;
+}
+
+.menuTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ion-color-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.menuSubtitle {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ion-text-color-secondary);
+}
+
+.menuContent {
+  --background: var(--ion-background-color);
+}
+
+/* Bender card at top */
+.benderCard {
+  margin: 12px;
+  padding: 14px 16px;
+  background: var(--ion-surface-color);
+  border: 1px solid var(--ion-color-step-200);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.benderName {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ion-text-color);
+  margin-bottom: 2px;
+}
+
+.benderShoe {
+  font-size: 13px;
+  color: var(--ion-color-primary);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.benderStats {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--ion-color-step-100);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.statLabel {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ion-text-color-secondary);
+  margin-bottom: 1px;
+}
+
+.statValue {
+  font-size: 13px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 700;
+  color: var(--ion-text-color);
+}
+
+.changeBender {
+  font-size: 11px;
+  color: var(--ion-color-secondary);
+  margin-top: 2px;
+}
+
+.noBender {
+  font-size: 13px;
+  color: var(--ion-text-color-secondary);
+  font-style: italic;
+}
+
+/* Group sections */
+.group {
+  margin-top: 8px;
+}
+
+.groupHeader {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ion-text-color-secondary);
+  padding: 6px 16px 2px;
+}
+
+.groupList {
+  background: transparent;
+  padding: 0;
+}
+
+.menuItem {
+  --background: transparent;
+  --background-activated: rgba(255, 255, 255, 0.05);
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --min-height: 44px;
+  --border-radius: 8px;
+  margin: 1px 8px;
+  border-radius: 8px;
+}
+
+.menuItemActive {
+  --background: rgba(245, 166, 35, 0.12);
+}
+
+.menuItemActive .itemIcon {
+  color: var(--ion-color-primary);
+}
+
+.menuItemActive .itemLabel {
+  color: var(--ion-color-primary);
+  font-weight: 700;
+}
+
+.menuItemDisabled {
+  opacity: 0.4;
+}
+
+.itemIcon {
+  font-size: 18px;
+  color: var(--ion-text-color-secondary);
+  margin-right: 4px;
+}
+
+.itemLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ion-text-color);
+}
+
+.soonBadge {
+  font-size: 9px;
+  padding: 2px 6px;
+}
+
+/* Bottom utility links */
+.bottomLinks {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--ion-color-step-100);
+  margin-top: 16px;
+}
